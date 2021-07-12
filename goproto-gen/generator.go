@@ -386,8 +386,8 @@ func (b bodyGen) doStruct(sw *generator.SnippetWriter) error {
 			fmt.Fprintf(out, "repeated ")
 		case field.Required:
 			fmt.Fprintf(out, "required ")
-		// default:
-		// 	fmt.Fprintf(out, "optional ")
+			// default:
+			// 	fmt.Fprintf(out, "optional ")
 		}
 		sw.Do(`$.Type|local$ $.Name$ = $.Tag$`, field)
 		if len(field.Extras) > 0 {
@@ -597,7 +597,9 @@ func protobufTagToField(tag string, field *protoField, m types.Member, t *types.
 	for i, extra := range parts[3:] {
 		parts := strings.SplitN(extra, "=", 2)
 		if len(parts) != 2 {
-			return fmt.Errorf("member %q of %q malformed 'protobuf' tag, tag %d should be key=value, got %q\n", m.Name, t.Name, i+4, extra)
+			if parts[0] != "proto3" {
+				return fmt.Errorf("member %q of %q malformed 'protobuf' tag, tag %d should be key=value, got %q\n", m.Name, t.Name, i+4, extra)
+			}
 		}
 		switch parts[0] {
 		case "name":
@@ -631,8 +633,8 @@ func membersToFields(locator ProtobufLocator, t *types.Type, localPackage types.
 		tags := reflect.StructTag(m.Tags)
 		field := protoField{
 			LocalPackage: localPackage,
-			Tag:    -1,
-			Extras: make(map[string]string),
+			Tag:          -1,
+			Extras:       make(map[string]string),
 		}
 
 		protobufTag := tags.Get("protobuf")
@@ -738,7 +740,7 @@ func formatProtoFile(source []byte) ([]byte, error) {
 func assembleProtoFile(w io.Writer, f *generator.File) {
 	w.Write(f.Header)
 
-	fmt.Fprint(w, "syntax = 'proto3';\n\n")
+	fmt.Fprint(w, "syntax = \"proto3\";\n\n")
 
 	if len(f.PackageName) > 0 {
 		fmt.Fprintf(w, "package %s;\n\n", f.PackageName)
